@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend para Clinica Odontológica</title>
+</head>
+<body>
+<h1>Clínica Odontológica</h1>
+
+<!-- Formulario para registrar un odontólogo -->
+<h2>Registrar Odontólogo</h2>
+<form id="formRegistrarOdontologo">
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre" required><br><br>
+    <label for="apellido">Apellido:</label>
+    <input type="text" id="apellido" name="apellido" required><br><br>
+    <label for="matricula">Matrícula:</label>
+    <input type="text" id="matricula" name="matricula" required><br><br>
+    <button type="submit">Registrar Odontólogo</button>
+</form>
+
+<hr>
+
+<!-- Lista de odontólogos -->
+<h2>Listado de Odontólogos</h2>
+<ul id="listaOdontologos">
+    <!-- Aquí se mostrarán dinámicamente los odontólogos -->
+</ul>
+
+<script>
+    // URL base del backend (ajustar según la configuración de tu servidor)
+    const baseUrl = 'http://localhost:8080';
+
+    // Función para registrar un odontólogo
+    const registrarOdontologo = async (odontologo) => {
+        try {
+            const response = await fetch(`${baseUrl}/odontologos/registrar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(odontologo)
+            });
+            const data = await response.json();
+            console.log('Odontólogo registrado:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al registrar el odontólogo:', error);
+            throw error;
+        }
+    };
+
+    // Función para listar todos los odontólogos
+    const listarOdontologos = async () => {
+        try {
+            const response = await fetch(`${baseUrl}/odontologos/listar`);
+            const data = await response.json();
+            console.log('Listado de odontólogos:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al obtener el listado de odontólogos:', error);
+            throw error;
+        }
+    };
+
+    // Función para procesar el formulario de registro de odontólogo
+    const handleFormSubmit = async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const nombre = form.nombre.value;
+        const apellido = form.apellido.value;
+        const matricula = form.matricula.value;
+
+        try {
+            const odontologo = await registrarOdontologo({ nombre, apellido, matricula });
+            form.reset();
+            alert('Odontólogo registrado correctamente');
+            // Actualizar la lista de odontólogos después de registrar uno nuevo
+            await mostrarListadoOdontologos();
+        } catch (error) {
+            alert('Error al registrar el odontólogo');
+            console.error('Error:', error);
+        }
+    };
+
+    // Función para mostrar el listado de odontólogos en la página
+    const mostrarListadoOdontologos = async () => {
+        const listaOdontologosElement = document.getElementById('listaOdontologos');
+        listaOdontologosElement.innerHTML = ''; // Limpiar la lista actual
+
+        try {
+            const odontologos = await listarOdontologos();
+            odontologos.forEach(odontologo => {
+                const li = document.createElement('li');
+                li.textContent = `${odontologo.nombre} ${odontologo.apellido} - Matrícula: ${odontologo.matricula}`;
+                listaOdontologosElement.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error al mostrar el listado de odontólogos:', error);
+        }
+    };
+
+    // Asociar la función handleFormSubmit al evento submit del formulario
+    document.getElementById('formRegistrarOdontologo').addEventListener('submit', handleFormSubmit);
+
+    // Mostrar el listado de odontólogos al cargar la página
+    mostrarListadoOdontologos();
+</script>
+</body>
+</html>

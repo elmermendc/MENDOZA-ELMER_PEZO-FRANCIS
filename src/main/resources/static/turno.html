@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend para Gestión de Turnos</title>
+</head>
+<body>
+<h1>Gestión de Turnos</h1>
+
+<!-- Formulario para registrar un turno -->
+<h2>Registrar Turno</h2>
+<form id="formRegistrarTurno">
+    <label for="fechaYHora">Fecha y Hora:</label>
+    <input type="datetime-local" id="fechaYHora" name="fechaYHora" required><br><br>
+    <label for="odontologoId">ID Odontólogo:</label>
+    <input type="number" id="odontologoId" name="odontologoId" required><br><br>
+    <label for="pacienteId">ID Paciente:</label>
+    <input type="number" id="pacienteId" name="pacienteId" required><br><br>
+    <button type="submit">Registrar Turno</button>
+</form>
+
+<hr>
+
+<!-- Lista de turnos -->
+<h2>Listado de Turnos</h2>
+<ul id="listaTurnos">
+    <!-- Aquí se mostrarán dinámicamente los turnos -->
+</ul>
+
+<script>
+    // URL base del backend (ajustar según la configuración de tu servidor)
+    const baseUrl = 'http://localhost:8080';
+
+    // Función para registrar un turno
+    const registrarTurno = async (turno) => {
+        try {
+            const response = await fetch(`${baseUrl}/turnos/registrar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(turno)
+            });
+            const data = await response.json();
+            console.log('Turno registrado:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al registrar el turno:', error);
+            throw error;
+        }
+    };
+
+    // Función para listar todos los turnos
+    const listarTurnos = async () => {
+        try {
+            const response = await fetch(`${baseUrl}/turnos/listar`);
+            const data = await response.json();
+            console.log('Listado de turnos:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al obtener el listado de turnos:', error);
+            throw error;
+        }
+    };
+
+    // Función para procesar el formulario de registro de turno
+    const handleFormSubmitTurno = async (event) => {
+        event.preventDefault();
+        const form = event.target;
+
+        // Obtener la fecha y hora del input, asegurando que tenga segundos
+        const fechaYHoraInput = form.fechaYHora.value;
+        const fechaYHora = `${fechaYHoraInput}:00`; // Agregar segundos si no están presentes
+
+        const odontologoId = form.odontologoId.value;
+        const pacienteId = form.pacienteId.value;
+
+        try {
+            const turno = await registrarTurno({
+                fechaYHora,
+                odontologo: { id: parseInt(odontologoId) },
+                paciente: { id: parseInt(pacienteId) }
+            });
+            form.reset();
+            alert('Turno registrado correctamente');
+            // Actualizar la lista de turnos después de registrar uno nuevo
+            await mostrarListadoTurnos();
+        } catch (error) {
+            alert('Error al registrar el turno');
+            console.error('Error:', error);
+        }
+    };
+
+    // Función para mostrar el listado de turnos en la página
+    const mostrarListadoTurnos = async () => {
+        const listaTurnosElement = document.getElementById('listaTurnos');
+        listaTurnosElement.innerHTML = ''; // Limpiar la lista actual
+
+        try {
+            const turnos = await listarTurnos();
+            turnos.forEach(turno => {
+                const li = document.createElement('li');
+                li.textContent = `ID: ${turno.id} - Fecha y Hora: ${turno.fechaYHora}`;
+                listaTurnosElement.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error al mostrar el listado de turnos:', error);
+        }
+    };
+
+    // Asociar la función handleFormSubmitTurno al evento submit del formulario de turno
+    document.getElementById('formRegistrarTurno').addEventListener('submit', handleFormSubmitTurno);
+
+    // Mostrar el listado de turnos al cargar la página
+    mostrarListadoTurnos();
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend para Clínica Odontológica</title>
+</head>
+<body>
+<h1>Clínica Odontológica</h1>
+
+<!-- Formulario para registrar un paciente -->
+<h2>Registrar Paciente</h2>
+<form id="formRegistrarPaciente">
+    <label for="nombrePaciente">Nombre:</label>
+    <input type="text" id="nombrePaciente" name="nombre" required><br><br>
+    <label for="apellidoPaciente">Apellido:</label>
+    <input type="text" id="apellidoPaciente" name="apellido" required><br><br>
+    <label for="dniPaciente">DNI:</label>
+    <input type="number" id="dniPaciente" name="dni" required><br><br>
+    <label for="fechaIngreso">Fecha de Ingreso:</label>
+    <input type="date" id="fechaIngreso" name="fechaIngreso" required><br><br>
+    <label for="calleDomicilio">Calle:</label>
+    <input type="text" id="calleDomicilio" name="calle" required><br><br>
+    <label for="numeroDomicilio">Número:</label>
+    <input type="number" id="numeroDomicilio" name="numero" required><br><br>
+    <label for="localidadDomicilio">Localidad:</label>
+    <input type="text" id="localidadDomicilio" name="localidad" required><br><br>
+    <label for="provinciaDomicilio">Provincia:</label>
+    <input type="text" id="provinciaDomicilio" name="provincia" required><br><br>
+    <button type="submit">Registrar Paciente</button>
+</form>
+
+<hr>
+
+<!-- Lista de pacientes -->
+<h2>Listado de Pacientes</h2>
+<ul id="listaPacientes">
+    <!-- Aquí se mostrarán dinámicamente los pacientes -->
+</ul>
+
+<script>
+    // URL base del backend (ajustar según la configuración de tu servidor)
+    const baseUrl = 'http://localhost:8080';
+
+    // Función para registrar un paciente
+    const registrarPaciente = async (paciente) => {
+        try {
+            const response = await fetch(`${baseUrl}/pacientes/registrar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paciente)
+            });
+            const data = await response.json();
+            console.log('Paciente registrado:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al registrar el paciente:', error);
+            throw error;
+        }
+    };
+
+    // Función para listar todos los pacientes
+    const listarPacientes = async () => {
+        try {
+            const response = await fetch(`${baseUrl}/pacientes/listar`);
+            const data = await response.json();
+            console.log('Listado de pacientes:', data);
+            return data;
+        } catch (error) {
+            console.error('Error al obtener el listado de pacientes:', error);
+            throw error;
+        }
+    };
+
+    // Función para procesar el formulario de registro de paciente
+    const handleFormSubmitPaciente = async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const nombre = form.nombre.value;
+        const apellido = form.apellido.value;
+        const dni = form.dni.value;
+        const fechaIngreso = form.fechaIngreso.value;
+        const calle = form.calle.value;
+        const numero = form.numero.value;
+        const localidad = form.localidad.value;
+        const provincia = form.provincia.value;
+
+        try {
+            const paciente = await registrarPaciente({
+                nombre,
+                apellido,
+                dni: parseInt(dni),
+                fechaIngreso,
+                domicilioEntradaDto: {
+                    calle,
+                    numero: parseInt(numero),
+                    localidad,
+                    provincia
+                }
+            });
+            form.reset();
+            alert('Paciente registrado correctamente');
+            // Actualizar la lista de pacientes después de registrar uno nuevo
+            await mostrarListadoPacientes();
+        } catch (error) {
+            alert('Error al registrar el paciente');
+            console.error('Error:', error);
+        }
+    };
+
+    // Función para mostrar el listado de pacientes en la página
+    const mostrarListadoPacientes = async () => {
+        const listaPacientesElement = document.getElementById('listaPacientes');
+        listaPacientesElement.innerHTML = ''; // Limpiar la lista actual
+
+        try {
+            const pacientes = await listarPacientes();
+            pacientes.forEach(paciente => {
+                const li = document.createElement('li');
+                li.textContent = `${paciente.nombre} ${paciente.apellido} - DNI: ${paciente.dni}`;
+                listaPacientesElement.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error al mostrar el listado de pacientes:', error);
+        }
+    };
+
+    // Asociar la función handleFormSubmitPaciente al evento submit del formulario de paciente
+    document.getElementById('formRegistrarPaciente').addEventListener('submit', handleFormSubmitPaciente);
+
+    // Mostrar el listado de pacientes al cargar la página
+    mostrarListadoPacientes();
+</script>
+</body>
+</html>
